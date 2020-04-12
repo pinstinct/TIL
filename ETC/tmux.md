@@ -13,4 +13,6 @@ tmux의 주요 용도는 다음과 같다.
 
 ## Basic concepts
 
+### The tmux server and clients
+
 
