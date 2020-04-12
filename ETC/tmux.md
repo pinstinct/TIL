@@ -16,3 +16,70 @@ tmux의 주요 용도는 다음과 같다.
 ### The tmux server and clients
 
 
+## Command
+
+### Session
+
+```shell
+# 새 세션 생성
+$ tmux new -s <session-name>
+
+# 세션 목록
+$ tmux ls
+
+# 세션 연결(reattached)
+$ tmux attach -t <session-name>
+
+# 세션 종료
+$ tmux kill-session -t <session-name>
+```
+
+```tmux
+# 세션 분리(detached)
+ctrl + b, d
+
+# 세션 종료
+exit
+```
+
+### Window
+
+```tumx
+# 새 윈도우 생성
+ctrl + b, c
+
+# 윈도우 이름 수정
+ctrl + b, ,
+
+# 윈도우 종료
+ctrl + d
+
+# 윈도우 이동
+ctrl + b, 0-9
+
+# 윈도우 리스트
+ctrl + b, w
+
+```
+
+## Pane
+
+```tmux
+# 세로 분할
+ctrl + b, %
+
+# 가로 분할
+ctrl + b, "
+
+# 이동
+ctrl + b, 방향키
+
+# 삭제
+ctrl + d
+
+# 레이아웃 변경
+ctrl + b, spacebar
+
+# 전체화면 전환/복구
+ctrl + b, z
+```
