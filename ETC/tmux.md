@@ -83,3 +83,20 @@ ctrl + b, spacebar
 # 전체화면 전환/복구
 ctrl + b, z
 ```
+
+## Copy & paste
+
+```
+# 복사 시작
+ctrl + b, [
+
+# 복사 영역 선택
+ctrl + spacebar
+
+# 복사
+ctrl + w
+
+# 붙여넣기
+ctrl + b, ]
+```
+
