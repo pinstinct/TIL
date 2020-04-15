@@ -12,10 +12,10 @@ k	cursor up
 ```
 ctrl + b	page up
 ctrl + f 	page down
-G			bottom of file
-gg			top of file
-#G			goto line #
-#gg			goto line #
+G	bottom of file
+gg	top of file
+#G	goto line #
+#gg	goto line #
 ```
 
 ```
