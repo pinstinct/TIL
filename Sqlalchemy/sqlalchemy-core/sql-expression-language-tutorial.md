@@ -32,6 +32,172 @@ Python shell에서 진행한다.
 `MetaData`라는 카달로그 안에 테이블을 모두 정의한다. 
 
 ```python
-print(metadata.tables)
+>>> print(metadata.tables)
 immutabledict({'users': Table('users', MetaData(bind=None), Column('id', Integer(), table=<users>, primary_key=True, nullable=False), Column('name', String(), table=<users>), Column('fullname', String(), table=<users>), schema=None), 'addresses': Table('addresses', MetaData(bind=None), Column('id', Integer(), table=<addresses>, primary_key=True, nullable=False), Column('user_id', Integer(), ForeignKey('users.id'), table=<addresses>), Column('email_address', String(), table=<addresses>, nullable=False), schema=None)})
 ```
+
+## Insert Expressions
+
+```python
+>>> ins = users.insert().values(name='jack', fullname='Jack Jones')
+>>> ins.compile().params  # 데이터 보기  
+{'fullname': 'Jack Jones', 'name': 'jack'}
+```
+
+## Executing
+
+```python
+>>> conn = engine.connect()  # DB 연결
+>>> result = conn.execute(ins)  # ResultProxy 객체 
+INSERT INTO users (name, fullname) VALUES (?, ?)
+('jack', 'Jack Jones')
+COMMIT
+```
+입력한 매개 변수 대신 `?`가 로그로 출력된다. `Connection`이 SQLite dialect 사용해 명령문을 생성하는데, dialect은 이  명령어를 인식하지 못하기 때문에 입력한 매개 변수들을 기본값으로 돌린다.
+
+```python
+>>> result.inserted_primary_key
+[1]
+```
+
+## Executing Multiple Statements
+
+위의 예제는 의도적으로 다양한 동작을 보여주기 위한 방법이다. 일반적인 방법은 아래와 같다.
+```python
+>>> ins = users.insert()
+>>> conn.execute(ins, id=2, name='wendy', fullname='Wendy Williams')
+```
+여러 매개 변수들을 실행할 때, 각 딕셔너리에는 같은 키들이 있어야 한다. 리스트의 첫 번째 딕셔너리를 컴파일하고, 모든 후속 딕셔너리가 호환되는 것으로 가정하기 때문이다.
+```python
+>>> conn.execute(addresses.insert(), [
+...    {'user_id': 1, 'email_address' : 'jack@yahoo.com'},
+...    {'user_id': 1, 'email_address' : 'jack@msn.com'},
+...    {'user_id': 2, 'email_address' : 'www@www.org'},
+...    {'user_id': 2, 'email_address' : 'wendy@aol.com'},
+... ])
+```
+`insert()`, `update()`, `delete()` construct에서도 "executemany" 스타일의 호출이 가능하다.
+
+## Selecting
+
+SELECT 문을 생성하는데 사용하는 construct는 `select()` 함수이다.
+```python 
+>>> from sqlalchemy.sql import select
+>>> s = select([users])
+>>> result = conn.execute(s)
+SELECT users.id, users.name, users.fullname
+FROM users
+()
+```
+리턴 값, `result`는 DBAPI 커서와 매우 유사한 ResultProxy 객체이며 `fetchone()`, `fetchall()` 같은 함수를 포함한다.
+
+```python
+>>> for row in result:
+...     print(row)
+(1, u'jack', u'Jack Jones')
+(2, u'wendy', u'Wendy Williams')
+
+>>> result = conn.execute(s)
+>>> row = result.fetchone()
+>>> print("name:", row['name'], "; fullname:", row['fullname'])
+name: jack ; fullname: Jack Jones
+>>> row = result.fetchone()
+>>> print("name:", row[1], "; fullname:", row[2])
+name: wendy ; fullname: Wendy Williams
+
+>>> for row in conn.execute(s):
+...     print("name:", row[users.c.name], "; fullname:", row[users.c.fullname])
+name: jack ; fullname: Jack Jones
+name: wendy ; fullname: Wendy Williams
+```
+ResultProxy 객체는 "auth-close" 기능을 제공한다. 명시적으로 닫으려면 `ResultProxy.close()` 함수를 사용한다.
+```python
+>>> result.close()
+```
+
+## Selecting Specific Columns
+
+```python
+>>> s = select([users.c.name, users.c.fullname])
+>>> result = conn.execute(s)
+>>> for row in result:
+...     print(row)
+(u'jack', u'Jack Jones')
+(u'wendy', u'Wendy Williams')
+
+>>> for row in conn.execute(select([users, addresses])):
+...     print(row)
+(1, u'jack', u'Jack Jones', 1, 1, u'jack@yahoo.com')
+(1, u'jack', u'Jack Jones', 2, 1, u'jack@msn.com')
+(1, u'jack', u'Jack Jones', 3, 2, u'www@www.org')
+(1, u'jack', u'Jack Jones', 4, 2, u'wendy@aol.com')
+(2, u'wendy', u'Wendy Williams', 1, 1, u'jack@yahoo.com')
+(2, u'wendy', u'Wendy Williams', 2, 1, u'jack@msn.com')
+(2, u'wendy', u'Wendy Williams', 3, 2, u'www@www.org')
+(2, u'wendy', u'Wendy Williams', 4, 2, u'wendy@aol.com')
+
+>>> s = select([users, addresses]).where(users.c.id == addresses.c.user_id)
+>>> for row in conn.execute(s):
+...     print(row)
+(1, u'jack', u'Jack Jones', 1, 1, u'jack@yahoo.com')
+(1, u'jack', u'Jack Jones', 2, 1, u'jack@msn.com')
+(2, u'wendy', u'Wendy Williams', 3, 2, u'www@www.org')
+(2, u'wendy', u'Wendy Williams', 4, 2, u'wendy@aol.com')
+```
+
+## Conjunctions
+
+```python
+>>> from sqlalchemy.sql import and_, or_, not_
+>>> print(and_(
+...         users.c.name.like('j%'),
+...         users.c.id == addresses.c.user_id,
+...         or_(
+...              addresses.c.email_address == 'wendy@aol.com',
+...              addresses.c.email_address == 'jack@yahoo.com'
+...         ),
+...         not_(users.c.id > 5)
+...       )
+...  )
+users.name LIKE :name_1 AND users.id = addresses.user_id AND
+(addresses.email_address = :email_address_1
+   OR addresses.email_address = :email_address_2)
+AND users.id <= :id_1
+```
+
+```python
+>>> s = select([(users.c.fullname +
+...               ", " + addresses.c.email_address).
+...                label('title')]).\
+...        where(
+...           and_(
+...               users.c.id == addresses.c.user_id,
+...               users.c.name.between('m', 'z'),
+...               or_(
+...                  addresses.c.email_address.like('%@aol.com'),
+...                  addresses.c.email_address.like('%@msn.com')
+...               )
+...           )
+...        )
+>>> conn.execute(s).fetchall()
+[(u'Wendy Williams, wendy@aol.com',)]
+
+# and_() 대신 Select.where()를 사용 
+>>> s = select([(users.c.fullname +
+...               ", " + addresses.c.email_address).
+...                label('title')]).\
+...        where(users.c.id == addresses.c.user_id).\
+...        where(users.c.name.between('m', 'z')).\
+...        where(
+...               or_(
+...                  addresses.c.email_address.like('%@aol.com'),
+...                  addresses.c.email_address.like('%@msn.com')
+...               )
+...        )
+>>> conn.execute(s).fetchall()
+[(u'Wendy Williams, wendy@aol.com',)]
+```
+
+## Using Textual SQL
+
+
