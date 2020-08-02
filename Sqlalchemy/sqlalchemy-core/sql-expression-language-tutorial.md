@@ -53,7 +53,7 @@ INSERT INTO users (name, fullname) VALUES (?, ?)
 ('jack', 'Jack Jones')
 COMMIT
 ```
-입력한 매개 변수 대신 `?`가 로그로 출력된다. `Connection`이 SQLite dialect 사용해 명령문을 생성하는데, dialect은 이  명령어를 인식하지 못하기 때문에 입력한 매개 변수들을 기본값으로 돌린다.
+입력한 매개 변수 대신 `?`가 로그가 출력된다. `Connection`이 SQLite dialect 사용해 명령문을 생성하는데, dialect는 이 명령어를 인식하지 못하기 때문에 입력한 매개 변수들을 기본값으로 돌린다.
 
 ```python
 >>> result.inserted_primary_key
@@ -199,5 +199,18 @@ AND users.id <= :id_1
 ```
 
 ## Using Textual SQL
+
+```python
+>>> from sqlalchemy.sql import text
+>>> s = text(
+...     "SELECT users.fullname || ', ' || addresses.email_address AS title "
+...         "FROM users, addresses "
+...         "WHERE users.id = addresses.user_id "
+...         "AND users.name BETWEEN :x AND :y "
+...         "AND (addresses.email_address LIKE :e1 "
+...             "OR addresses.email_address LIKE :e2)")
+>>> conn.execute(s, x='m', y='z', e1='%@aol.com', e2='%@msn.com').fetchall()
+[(u'Wendy Williams, wendy@aol.com',)]
+```
 
 
