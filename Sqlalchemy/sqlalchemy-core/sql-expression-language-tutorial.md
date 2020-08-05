@@ -110,7 +110,7 @@ name: wendy ; fullname: Wendy Williams
 name: jack ; fullname: Jack Jones
 name: wendy ; fullname: Wendy Williams
 ```
-ResultProxy 객체는 "auth-close" 기능을 제공한다. 명시적으로 닫으려면 `ResultProxy.close()` 함수를 사용한다.
+ResultProxy 객체는 "auto close" 기능을 제공한다. 명시적으로 닫으려면 `ResultProxy.close()` 함수를 사용한다.
 ```python
 >>> result.close()
 ```
@@ -213,4 +213,89 @@ AND users.id <= :id_1
 [(u'Wendy Williams, wendy@aol.com',)]
 ```
 
+## Using Aliases and Subqueries
 
+```python
+>>> a1 = addresses.alias()
+>>> a2 = addresses.alias()
+>>> s = select([users]).\
+...        where(and_(
+...            users.c.id == a1.c.user_id,
+...            users.c.id == a2.c.user_id,
+...            a1.c.email_address == 'jack@msn.com',
+...            a2.c.email_address == 'jack@yahoo.com'
+...        ))
+>>> conn.execute(s).fetchall()
+SELECT users.id, users.name, users.fullname
+FROM users, addresses AS addresses_1, addresses AS addresses_2
+WHERE users.id = addresses_1.user_id
+    AND users.id = addresses_2.user_id
+    AND addresses_1.email_address = ?
+    AND addresses_2.email_address = ?
+('jack@msn.com', 'jack@yahoo.com')
+[(1, u'jack', u'Jack Jones')]
+```
+SQL 결과에 `addresses_1`과 `addresses_2`가 생겼다. 이 이름은 명령문 내 위치에 따라 결정된다. 
+
+```python
+>>> a1 = addresses.alias('a1')
+>>> s = select([users]).\
+...        where(and_(
+...            users.c.id == a1.c.user_id,
+...            users.c.id == a2.c.user_id,
+...            a1.c.email_address == 'jack@msn.com',
+...            a2.c.email_address == 'jack@yahoo.com'
+...        ))
+>>> conn.execute(s).fetchall()
+SELECT users.id, users.name, users.fullname
+FROM users, addresses AS a1, addresses AS addresses_1
+WHERE users.id = a1.user_id 
+	AND users.id = addresses_1.user_id 
+	AND a1.email_address = ? 
+	AND addresses_1.email_address = ?
+('jack@msn.com', 'jack@yahoo.com')
+[(1, u'jack', u'Jack Jones')]
+```
+
+```python
+>>> address_subq = s.alias()
+>>> s = select([users.c.name]).where(users.c.id == address_subq.c.id)
+>>> conn.execute(s).fetchall()
+[(u'jack',)]
+```
+
+## Using Joins
+
+```python
+>>> print(users.join(addresses))
+users JOIN addresses ON users.id = addresses.user_id
+```
+
+SQLAlchemy는 두 테이블이 JOIN 할 때, ON 조건을 ForeignKey 기반으로 자동 생성한다. 
+
+```python
+>>> print(users.join(addresses,
+...                 addresses.c.email_address.like(users.c.name + '%')
+...             )
+...  )
+users JOIN addresses ON addresses.email_address LIKE users.name || :name_1
+```
+
+JOIN을 사용해 `select()`문을 만들 때, `Select.select_from()` 메소드를 사용한다.
+
+```python
+>>> s = select([users.c.fullname]).select_from(
+...    users.join(addresses,
+...             addresses.c.email_address.like(users.c.name + '%'))
+...    )
+>>> conn.execute(s).fetchall()
+[(u'Jack Jones',), (u'Jack Jones',), (u'Wendy Williams',)]
+```
+
+```python
+>>> s = select([users.c.fullname]).select_from(users.outerjoin(addresses))
+>>> print(s)
+SELECT users.fullname
+    FROM users
+    LEFT OUTER JOIN addresses ON users.id = addresses.user_id
+```
