@@ -271,7 +271,7 @@ WHERE users.id = a1.user_id
 users JOIN addresses ON users.id = addresses.user_id
 ```
 
-SQLAlchemy는 두 테이블이 JOIN 할 때, ON 조건을 ForeignKey 기반으로 자동 생성한다. 
+두 테이블이 JOIN 할 때, ForeignKey 기반으로 ON 조건을 자동 생성한다. 
 
 ```python
 >>> print(users.join(addresses,
