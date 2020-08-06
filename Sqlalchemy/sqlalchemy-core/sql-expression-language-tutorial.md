@@ -122,7 +122,7 @@ ResultProxy 객체는 "auto close" 기능을 제공한다. 명시적으로 닫�
 >>> conn.execute(stmt).fetchall()
 [(u'jack',), (u'wendy',)]
 ```
-`ColumnElement.asc()`와 `ColumnElement.desc()'를 사용해 오름차순 또는 내림차순을 제어할 수 있다.
+`ColumnElement.asc()`와 `ColumnElement.desc()`를 사용해 오름차순 또는 내림차순을 제어할 수 있다.
 
 ```python
 >>> stmt = select([users.c.name]).order_by(users.c.name.desc())
