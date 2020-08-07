@@ -140,6 +140,45 @@ ResultProxy 객체는 "auto close" 기능을 제공한다. 명시적으로 닫�
 [(u'jack', 2), (u'wendy', 2)]
 ```
 
+GROUP BY가 적용된 후, HAVING은 집계 값의 결과를 필터링하는데 사용한다. 
+```python
+>>> stmt = select([users.c.name, func.count(addresses.c.id)]).\
+...             select_from(users.join(addresses)).\
+...             group_by(users.c.name).\
+...             having(func.length(users.c.name) > 4)
+>>> conn.execute(stmt).fetchall()
+[(u'wendy', 2)]
+```
+
+작성된 SELECT 문에서 중복을 처리하는 일반적인 방법은 DISTINCT이다.
+```python
+>>> stmt = select([users.c.name]).\
+...             where(addresses.c.email_address.
+...                    contains(users.c.name)).\
+...             distinct()
+>>> conn.execute(stmt).fetchall()
+[(u'jack',), (u'wendy',)]
+```
+
+### Limiting
+
+```python
+>>> stmt = select([users.c.name, addresses.c.email_address]).\
+...             select_from(users.join(addresses)).\
+...             limit(1).offset(1)
+>>> conn.execute(stmt).fetchall()
+[(u'jack', u'jack@msn.com')]
+```
+LIMIT은 반환 개수, OFFSET은 n번째 row부터 반환 
+
+```python
+>>> stmt = select([users.c.name, addresses.c.email_address]).\
+...:     select_from(users.join(addresses)).\
+...:     offset(2)
+>>> conn.execute(stmt).fetchall()
+[('wendy', 'www@www.org'), ('wendy', 'wendy@aol.com')]
+```
+
 ## Selecting Specific Columns
 
 ```python
@@ -324,3 +363,82 @@ SELECT users.fullname
     FROM users
     LEFT OUTER JOIN addresses ON users.id = addresses.user_id
 ```
+
+## Inserts, Updates 
+
+```python
+>>> stmt = users.insert().\
+...         values(name=bindparam('_name') + " .. name")
+>>> conn.execute(stmt, [
+...        {'id':4, '_name':'name1'},
+...        {'id':5, '_name':'name2'},
+...        {'id':6, '_name':'name3'},
+...     ])
+INSERT INTO users (id, name) VALUES (?, (? || ?))
+((4, 'name1', ' .. name'), (5, 'name2', ' .. name'), (6, 'name3', ' .. name'))
+COMMIT
+```
+
+```python
+>>> stmt = users.update().\
+...             where(users.c.name == 'jack').\
+...             values(name='ed')
+
+>>> conn.execute(stmt)
+UPDATE users SET name=? WHERE users.name = ?
+('ed', 'jack')
+COMMIT
+```
+
+```python
+>>> stmt = users.update().\
+...             where(users.c.name == bindparam('oldname')).\
+...             values(name=bindparam('newname'))
+>>> conn.execute(stmt, [
+...     {'oldname':'jack', 'newname':'ed'},
+...     {'oldname':'wendy', 'newname':'mary'},
+...     {'oldname':'jim', 'newname':'jake'},
+...     ])
+UPDATE users SET name=? WHERE users.name = ?
+(('ed', 'jack'), ('mary', 'wendy'), ('jake', 'jim'))
+COMMIT
+```
+
+### Correlated Updates
+
+```python
+>>> stmt = select([addresses.c.email_address]).\
+...             where(addresses.c.user_id == users.c.id).\
+...             limit(1)
+>>> conn.execute(users.update().values(fullname=stmt))
+UPDATE users SET fullname=(SELECT addresses.email_address
+    FROM addresses
+    WHERE addresses.user_id = users.id
+    LIMIT ? OFFSET ?)
+(1, 0)
+COMMIT
+```
+
+## Deletes
+
+```python
+>>> conn.execute(addresses.delete())
+DELETE FROM addresses
+()
+COMMIT
+
+>>> conn.execute(users.delete().where(users.c.name > 'm'))
+DELETE FROM users WHERE users.name > ?
+('m',)
+COMMIT
+```
+
+### Matched Row Counts
+
+```python
+>>> result = conn.execute(users.delete())
+>>> result.rowcount
+1
+```
+
+
