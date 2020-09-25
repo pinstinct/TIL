@@ -8,7 +8,7 @@ SQLAlchemy에서 가장 중요한 부분은 Object Relational Mapper와 SQL Expr
 
 ### SQLAlchemy ORM
 
-### SQLAlchemy Core
+### [SQLAlchemy Core](sql-expression-language-tutorial)
 
 ## [설치](https://docs.sqlalchemy.org/en/13/intro.html#installation)
 
