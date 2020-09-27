@@ -6,4 +6,4 @@
 
 3. [표준 입출력 도구](./docs/03_input_output.md)
 
-4. [연산자 - 기본](./docs/04_operator.md)
+4. [연산자 - 기본](./docs/04_operator_basic.md)
