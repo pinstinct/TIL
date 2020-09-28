@@ -7,3 +7,5 @@
 3. [표준 입출력 도구](./docs/03_input_output.md)
 
 4. [연산자 - 기본](./docs/04_operator_basic.md)
+
+5. [연산자 - 응용](./docs/05_operator.md)
