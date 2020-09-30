@@ -9,3 +9,5 @@
 4. [연산자 - 기본](./docs/04_operator_basic.md)
 
 5. [연산자 - 응용](./docs/05_operator.md)
+
+6. [기본 제어문](./docs/06_control_statement.md)
