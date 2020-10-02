@@ -13,3 +13,5 @@
 6. [기본 제어문](./docs/06_control_statement.md)
 
 7. [반복문](./docs/07_repetitive_statement.md)
+
+8. [배열](./docs/08_array.md)
