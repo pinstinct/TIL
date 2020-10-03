@@ -15,3 +15,5 @@
 7. [반복문](./docs/07_repetitive_statement.md)
 
 8. [배열](./docs/08_array.md)
+
+9. [배열을 활용한 프로그래밍 기법](./docs/09_programmig_using_array.md)
