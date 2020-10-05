@@ -19,3 +19,5 @@
 9. [배열을 활용한 프로그래밍 기법](./docs/09_programmig_using_array.md)
 
 10. [함수에 대한 기본 이론](./docs/10_function.md)
+
+11. [메모리와 포인터](./docs/11_memory_and_pointer.md)
