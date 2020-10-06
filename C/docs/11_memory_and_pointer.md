@@ -62,7 +62,79 @@ int main(void)
 
 ### 3. 포인터와 배열
 
+배열의 이름은 0번 요소의 주소이며, 전체 배열을 대표하는 식별자입니다. 즉, `int`형 포인터에 `int`형 변수의 주소뿐만 아니라, `int`형 배열의 이름도 담을 수 있습니다.
+
+```c
+#include <stdio.h>
+
+int main(void)
+{
+    int aList[5] = {0};
+    int *pnData = aList;
+
+    printf("aList[0]: %d\n", aList[0]);
+    *pnData = 20;
+    printf("aList[0] : %d\n", aList[0]);
+    return 0;
+}
+```
+`int *pnData = aList`를 `int *pnData = &aList[0];`라고 수정해도 의미는 같습니다. 어차피 배열의 이름은 0번 요소의 주소에 부여한 식별자입니다.
+
+그리고 `*pnData = 20;` 코드의 '간접지정 연산자'는 단항연산자이며, 사실 이 연산은 `*(pnData + 0)`을 의미합니다. 포인터 변수 `pnData`에 저장된 주소를 기준으로 오른쪽으로 `int` 0개 떨어진 위치(주소)의 메모리를 `int`형 변수로 지정한다는 것입니다.
+
+그리고 `*(pnData + 0)`를 다른 코드로 표시하면 `pnData[0]`입니다. 배열과 포인터가 문법상 호환되는 이유는 개념적으로나 기술적으로나 사실상 같기 때문입니다. 단지 차이가 있다면 포인터 변수는 말 그대로 변수이고, 배열의 이름은 '주소상수'라는 것뿐입니다.
+
+```c
+#include <stdio.h>
+
+int main(void)
+{
+    char szBuffer[16] = {"Hello"};
+    char *pszData = szBuffer;
+    int nLength = 0;
+
+    while (*pszData != '\0')
+    {
+        pszData++;  // 포인터 한 칸 이동
+        nLength++;
+    }
+
+    printf("Length: %d\n", nLength);
+    printf("Length: %d\n", strlen(szBuffer));
+    printf("Length: %d\n", strlen("World"));
+    return 0;
+}
+```
+위의 예제는 포인터 변수에 저장된 주소값을 계속 증가시키는 방법으로 배열의 처음부터 `\0`이 저장된 메모리가 나올 때까지 차례로 접근합니다. `pszData++` 단항 연산으로 오른쪽으로 `char`형 크기만큼 한 칸 이동(주소 증가)합니다.
+
+```c
+#include <stdio.h>
+
+int main(void)
+{
+    char szBuffer[16] = {"Hello"};
+    char *pszData = szBuffer;
+    int nLength = 0;
+
+    while (*pszData != '\0')
+        pszData++;
+
+    printf("Length: %d\n", pszData - szBuffer);
+    return 0;
+}
+```
+위의 예제는 주소 차이를 이용해 문자열의 길이를 측정하는 예를 보인 것입니다.
+
 ## 메모리 동적 할당 및 관리
+
+`malloc()`과 `free()` 함수는 메모리를 동적으로 할당 및 해제하는 함수입니다. `malloc()` 함수를 이용하면 자동변수로 사용할 수 있는 메모리와는 비교할 수도 없을 만큼 큰 메모리를 자유롭게 다룰 수 있습니다. 게다가 '동적(dynamic, runtime)'으로 할 수 있습니다. 대신 반환(혹은 해제)의 책임이 따릅니다.
+
+```c
+void *malloc(size_t size);
+```
+- 인자: 할당받을 메모리의 바이트 단위 크기
+- 반환값: 힙 영역에 할당된 메모리 덩어리 중 첫 번째 바이트 메모리의 주소
+- 설명: 할당받은 메모리는 반드시 `free()` 함수를 이용하여 반환해야 하며, 메모리를 초기화하려면 `memset()` 함수를 이용해야 한다. 기본적으로는 쓰레기 값이 들어 있다.
 
 ### 1. 메모리 초기화 및 사용(배열)
 
