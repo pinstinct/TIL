@@ -136,9 +136,190 @@ void *malloc(size_t size);
 - 반환값: 힙 영역에 할당된 메모리 덩어리 중 첫 번째 바이트 메모리의 주소
 - 설명: 할당받은 메모리는 반드시 `free()` 함수를 이용하여 반환해야 하며, 메모리를 초기화하려면 `memset()` 함수를 이용해야 한다. 기본적으로는 쓰레기 값이 들어 있다.
 
+```c
+void free(void *memblock);
+```
+- 인자: 반환할 메모리 주소
+- 반환값: 없음
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(void)
+{
+    int *pList = NULL, i = 0;
+
+    // 12바이트 메모리를 동적할당
+    pList = (int*)malloc(sizeof(int) * 3);
+
+    pList[0] = 10;  // *(pList + 0) = 10;
+    pList[1] = 20;  // *(pList + 1) = 20;
+    pList[2] = 30;  // *(pList + 2) = 30;
+
+    for (i = 0; i < 3; ++i)
+        printf("%d\n", pList[i]);
+
+    // 메모리 해제
+    free(pList);
+    return 0;
+}
+```
+`malloc()` 함수의 반환 자료형은 `void *`이고 l-value인 `pList`의 자료형은 `int *`로 서로 다르다는 점입니다. 이 때문에 `void *`를 `int *`로 강제 형변환한 것입니다.
+
+그리고 `void`는 길이도 해석방법도 없다는 의미입니다. 즉 포인터 것은 맞지만, 이 주소가 가리키는 대상 메모리를 어떤 형식(자료형)으로 해석할지는 아직 결정되지 않았음을 의미합니다. `void`형은 인스턴화가 허용되지 않습니다.
+
+`free(pList);`를 통해 메모리 해제를 하지 않으면, 메모리가 사용할 수 없는 상태가 되는 **메모리 누수(memory leak)**가 발생합니다.
+
 ### 1. 메모리 초기화 및 사용(배열)
 
+변수를 선언하면 즉시 0으로 초기화하는 것이 일반적입니다.
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int main(void)
+{
+    int *pList = NULL, *pNewList = NULL;
+
+    // A. int형 3개 배열 선언 및 정의(0 초기화)
+    int aList[3] = {0};
+
+    // B. int형 3개를 담을 수 있는 크기의 메모리를 동적으로 할당한 후
+    // 메모리를 모두 0으로 초기화
+    pList = (int *)malloc(sizeof(int) * 3);
+    memset(pList, 0, sizeof(int) * 3);
+
+    // C. int형 3개를 담을 수 잇는 메모리를 0으로 초기화한 후 할당
+    pNewList = (int *)calloc(3, sizeof(int) * 3);
+
+    // 동적 할당 메모리 해제
+    free(pList);
+    free(pNewList);
+    return 0;
+}
+```
+
+```c
+void *memset(void *dest, int c, size_t count);
+```
+- 인자
+    - dest: 초기화 할 대상 메모리 주소
+    - c: 초기값
+    - count: 초기화 대상 메모리 바이트 단위 크기
+- 반환값: 대상 메모리 주소
+- 설명: 동적으로 할당받은 메모리에는 쓰레기 값이 있으므로 일반적으로 0으로 초기화하여 사용한다.
+
+```c
+void *calloc(size_t num, size_t size);
+```
+- 인자
+    - num: 요소의 개수
+    - size: 각 요소의 바이트 단위 크기
+- 반환값: 힙 영역에 할당된 메모리 덩어리 중 첫 번째 바이트 메모리 주소
+- 설명: `malloc()` 함수와 달리 할당받은 메모리를 0으로 초기화하여 전달한다.
+
+의도적으로 12라는 숫자 대신 `sizeof` 연산자를 사용한 이유는 그냥 12바이트라고 하면 `char[12]`수도 있고, `int[3]`일 수도 있습니다. 그러나 `sizeof(int) * 3`이라고 쓰면 동적 할당된 메모리가 `int[3]`의 형식으로 사용될 가능성을 암시할 수 있습니다.
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(void)
+{
+    char szBuffer[] = {"Hello"};
+    char *pszBuffer = "Hello";
+    char *pszData = NULL;
+
+    pszData = (char*)malloc(sizeof(char) * 6);
+    pszData[0] = 'H';
+    pszData[1] = 'e';
+    pszData[2] = 'l';
+    pszData[3] = 'l';
+    pszData[4] = 'o';
+    pszData[5] = '\0';
+
+    puts(szBuffer);
+    puts(pszBuffer);
+    puts(pszData);
+    return 0;
+}
+```
+`szBuffer`는 스택 메모리의 초기값이 되지만, `pszBuffer`는 데이터 영역 중 읽기전용 영역 어딘가에 "Hello"라는 문자열이 저장되고 첫 글자인 'H'가 저장된 기준주소가 포인터의 초기값이 됩니다.
+
 ### 2. 메모리 복사
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+int main(void)
+{
+    char szBuffer[12] = {"HelloWorld"};
+    char szNewBuffer[12] = {0};
+
+    memcpy(szNewBuffer, szBuffer, 4);
+    puts(szNewBuffer);
+
+    memcpy(szNewBuffer, szBuffer, 6);
+    puts(szNewBuffer);
+
+    memcpy(szNewBuffer, szBuffer, sizeof(szBuffer));
+    puts(szNewBuffer);
+
+    return 0;
+}
+```
+각 배열의 요소만큼 반복문을 수행하여 요소별로 일일이 단순 대입 연산을 수행해야 합니다. 그러나 `memcpy()` 함수를 사용하면 귀찮은 반복을 함수가 대신해줍니다.
+
+```c
+void *memcpy(void *dest, const void *src, size_t count);
+```
+- 인자
+    - dest: 대상 메모리 주소
+    - src: 복사할 원본 데이터가 저장된 메모리 주소
+    - count: 복사할 메모리의 바이트 단위 크기
+- 반환값: 대상 메모리 주소
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(void)
+{
+    char szBuffer[12] = {"HelloWorld"};
+    char *pszData = NULL;
+
+    pszData = (char*)malloc(sizeof(char) * 12);
+    pszData = szBuffer;
+    puts(pszData);
+    return 0;
+}
+```
+위의 예제는 중대한 두 가지 오류가 있습니다. 첫 번째로 동적 할당한 메모리를 해제하지 않았다는 점이고, 두 번째는 `pszData = szBuffer`행이 수행되고 나면 배열에 담긴 내용이 동적 할당한 메모리로 복사되는 것이 아니라 `pszData` 포인터 변수에 `szBuffer`라는 메모리 주소만 단순 대입하여 덮어쓰게 됩니다. 더욱이 `pszData`에 본래 담겨있던 정보가 유실됨으로써 해제할 방법을 아예 잃게 됩니다.
+
+단순히 주소 하나를 복사하는 것이 아니라 대상 메모리가 가진 내용을 **복사(deep copy)**해야 합니다. 깊은 복사(deep copy)의 핵심은 단지 대상을 가리키는 포인터가 늘어나는 것이 아니라 실제 대상이 여러 개로 복사되는 것을 뜻합니다. 반대로 지금 위의 코드처럼 포인터만 복사하는 것을 **얕은 복사(shallow copy)**라 합니다.
+
+```c
+char *strcpy(char *strDestination, const *strSource);
+```
+- 인자
+    - strDestination: 문자열이 복사되어 저장될 메모리의 주소
+    - strSource: 원본 문자열이 저장된 메모리 주소
+- 반환값: strDestination 인자로 주어진 주소 반환
+
+```c
+char *strncpy(char *strDestination, const char *strSource, size_t count);
+```
+- 인자
+    - strDestination: 문자열이 복사되어 저장될 메모리의 주소
+    - strSource: 원본 문자열이 저장된 메모리 주소
+    - count: 복사할 문자열의 길이
+- 반환값: strDestination 인자로 주어진 주소 반환
+
+`strcpy()` 함수는 `memcpy()` 함수와 거의 흡사한 함수로 두 메모리의 내용을 복사하는 기능을 수행합니다. 그러나 `strcpy()` 함수는 메모리 내용이 모두 문자열이라고 한정합니다. 또한 `strcpy()`는 보안결함이 있습니다. 그러므로 윈도우에서는 `strcpy_s()` 함수를 Unix, Linux에서는 `strncpy()`를 대체 함수로 사용할 수 있습니다.
 
 ### 3. 메모리 비교(`memcmp()`, `strcmp()`)
 
