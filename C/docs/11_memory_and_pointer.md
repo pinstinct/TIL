@@ -323,7 +323,80 @@ char *strncpy(char *strDestination, const char *strSource, size_t count);
 
 ### 3. 메모리 비교(`memcmp()`, `strcmp()`)
 
+```c
+int memcmp(const void *buf1, const void *buf2, size_t count);
+```
+- 인자
+    - buf1: 원본 메모리 주소
+    - buf2: 대상 메모리 주소
+    - count: 비교할 메모리의 바이트 단위 크기
+- 반환값
+    - 0이면 두 값은 같음
+    - 0보다 크면 buf1이 큼
+    - 0보다 작으면 buf2가 큼
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+int main(void)
+{
+    char szBuffer[12] = {"TestString"};
+    char *pszData = "TestString";
+
+    printf("%d\n", memcmp("teststring", pszData, 10));
+    printf("%d\n", memcmp("DataString", pszData, 10));
+    return 0;
+}
+```
+`memcmp()` 함수는 두 메모리에 저장된 정보를 일정 단위로 잘라서 감산 연산한 결과가 0인 동안 계속 반복합니다.
+
+위의 예제에서 't'가 'T'보다 크기 ASCII 숫자상 더 큰 정수이기 때문에 0보다 큰 값이 출력됩니다. 그리고 첫번째 비교에서 다르다는 점이 확인되었으므로 나머지 9바이트에 대해서는 비교하지 않고 결과를 반환합니다.
+
+```c
+int strcmp(const char *string1, const char *string2);
+```
+- 인자
+    - string1: 비교할 문자열이 저장된 메모리 주소
+    - string2: 비교할 문자열이 저장된 메모리 주소
+- 반환값
+    - 0이면 두 값은 같음
+    - 0보다 크면 string1이 큼
+    - 0보다 작으면 string2가 큼
+
+`strcmp()` 함수는 비교의 대상이 되는 정보를 '문자열'로 가정해서 처리합니다. `strncmp()` 함수를 이용하면 문자열의 앞에서 일정 길이만 비교할 수도 있습니다.
+
 ### 4. 문자열 검색
+
+```c
+char *strstr(const char *string, const char *strCharSet);
+```
+- 인자
+    - string: 검색 대상이 될 문자열이 저장된 메모리 주소
+    - strCharSet: 검색할 문자열이 저장된 메모리 주소
+- 반환값
+    - 문자열을 찾으면 해당 문자열이 저장된 메모리 주소 반환, 찾지 못하면 `NULL` 반환
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+int main(void)
+{
+    char szBuffer[32] = {"I am a boy"};
+
+    // 배열 주소 출력
+    printf("%p\n", szBuffer);
+    printf("%p\n", strstr(szBuffer, "am"));
+    printf("%p\n", strstr(szBuffer, "boy"));
+
+    // 인덱스 출력
+    printf("Index: %d\n", strstr(szBuffer, "am") - szBuffer);
+    printf("Index: %d\n", strstr(szBuffer, "boy") - szBuffer);
+    return 0;
+}
+```
+
 
 ### 5. 배열 연산자 풀어쓰기
 
