@@ -397,14 +397,88 @@ int main(void)
 }
 ```
 
-
 ### 5. 배열 연산자 풀어쓰기
+
+`*(기준주소 + 인덱스)`나 `기준주소[인덱스]`나 같은 의미입니다.
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+int main(void)
+{
+    char szBuffer[32] = {"You are a girl"};
+
+    printf("%c\n", szBuffer[5]);
+    printf("%c\n", *(szBuffer + 5));
+
+    printf("%s\n", &szBuffer[4]);
+    printf("%s\n", &*(szBuffer + 4));
+    printf("%s\n", szBuffer + 4);
+    return 0;
+}
+```
+`printf()` 함수는 `%s`와 대응된 인수를 **메모리의 주소**로 보고 거기서 한 글자씩 0이 나올 때까지 읽어와 하나의 완성된 문자열로 출력합니다.
 
 ### 6. `realloc()`, `sprintf()` 함수
 
+```c
+void *realloc(void *memblock, size_t size);
+```
+- 인자
+    - memblock: 기존 동적 할당된 메모리 주소, 이 주소가 `NULL`이면 `malloc()` 함수와 동일하게 동작
+    - size: 다시 할당받을 메모리 바이트 단위 크기
+- 반환값: 다시 할당된 메모리 덩어리 중 첫 번째 바이트의 메모리 주소, 실패하면 `NULL`을 반환하는데 이 경우 첫 번째 인자로 전달된 메모리를 수동으로 해제해야 함
+- 설명: 이미 할당된 메모리 영역에서 크기를 조절할 수 있다면, 반환된 주소는 첫 번째 인자로 전달된 주소와 같다. 그러나 불가능하다면 기존의 메모리를 해제하고 새로운 영역에 다시 할당한 후, 새로 할당된 메모리 주소를 반환한다.
+
+```c
+int sprintf(char *buffer, const char *format [, argument] ...);
+```
+- 인자
+    - buffer: 출력 문자열이 저장될 메모리 주소
+    - format: 형식 문자열이 저장될 메모리 주소
+    - [, argument]: 형식 문자열에 대응하는 가변 인자들
+- 반환값: 출력된 문자열의 개수
+- 설명: 형식 문자열에 맞추어 특정 메모리에 문자열을 저장하는 함수
+
+`sprintf()` 함수는 `printf()` 함수와 거의 흡사합니다. 다만 문자열이 콘솔 화면에 출력되는 것이 아니라 특정 주소의 메모리에 출력됩니다.
+
+```c
+#include <stdio.h>
+// #include <malloc.h>
+#include <string.h>
+
+int main(void)
+{
+    char *pszBuffer = NULL, *pszNewBuffer = NULL;
+
+    pszBuffer = (char*)malloc(12);
+    sprintf(pszBuffer, "%s", "TestString");
+    printf("[%p] %d %s\n", pszBuffer, _msize(pszBuffer), pszBuffer);
+
+    pszNewBuffer = (char*)realloc(pszBuffer, 32);
+    if (pszNewBuffer == NULL)
+        free(pszBuffer);
+    sprintf(pszNewBuffer, "%s", "TestStringData");
+    printf("[%p] %d %s\n", pszNewBuffer, _msize(pszNewBuffer), pszNewBuffer);
+    free(pszNewBuffer);
+    return 0;
+}
+```
+확장에 실패하면 `realloc()` 함수는 다른 주소를 반환합니다. 다른 주소를 반환할 경우 첫 번째 인수로 전달된 메모리를 해제하고 새 주소를 반환합니다. 그러나 `realloc()` 함수가 아예 실패할 경우 `NULL`을 반환하며, 첫 번째 인수로 전달된 메모리를 해제해주지 않습니다.
+
 ## 잘못된 메모리 접근
 
+문자열이 깨졌을 경우 가장 흔한 실수는 메모리의 경계를 넘긴 입/출력을 수행했거나 자신에게 할당된 메모리가 아닌 전혀 엉뚱한 메모리에 대해 입/출력을 수행한 경우입니다.
+
 ## 포인터의 배열과 다중 포인터
+
+포인터가 어려운 이유는 포인터 그 자체도 '변수'라는 사실 때문입니다. 변수는 메모리이고 메모리는 주소가 부여되어 있습니다. 포인터는 **변수 자체의 주소**와 **변수에 저장된 주소**, 두 개의 주소가 공존합니다.
+
+- 일반변수 이름: 주소 + 값
+- 포인터 이름: 주소 + 주소
+
+다중 포인터는 포인터가 가리키는 것이 포인터 변수입니다. `int`형 변수에 대한 포인터는 `int *`로 기술하며, `int *` 변수에 대한 포인터는 `int **`로 기술합니다. 그리고 선언된 포인터 변수에 대해 간접지정연산을 수행한 결과는 포인터의 대상 자료형에서 `*` 하나를 지운것과 같습니다.
 
 ### 1. `char*`의 배열
 
