@@ -482,12 +482,151 @@ int main(void)
 
 ### 1. `char*`의 배열
 
+다중 포인터가 등장하는 흔한 이유는 '포인터의 배열' 때문입니다.
+
+```c
+#include <stdio.h>
+
+int main(void)
+{
+    char *astrList[3] = {"Hello", "World", "String"};
+
+    // 배열의 요소가 char*이므로 %s로 출력
+    printf("%s\n", astrList[0]);
+    printf("%s\n", astrList[1]);
+    printf("%s\n", astrList[2]);
+
+    printf("%s\n", astrList[0] + 1);
+    printf("%s\n", astrList[1] + 2);
+    printf("%s\n", astrList[2] + 3);
+
+    printf("%c\n", astrList[0][3]);
+    printf("%c\n", astrList[1][3]);
+    printf("%c\n", astrList[2][3]);
+    return 0;
+}
+```
+1차원 구조의 자료형 두 종류(포인트 배열과 문자 배열)가 묶여서 논리적인 2차원 구조가 만들어졌다는 특징이 있습니다.
+
+`astrList`의 자료형은 `char* [3]` 혹은 `char**`입니다.
+
+```c
+#include <stdio.h>
+
+int main(int argc, char* argv[])
+{
+    int i = 0;
+    for (i = 0; i < argc; ++i)
+        puts(argv[i]);
+    puts("End");
+    return 0;
+}
+```
+원형이 표시된 `main()` 함수입니다. 함수의 첫 번째 인자는 두 번째 인자로 전달되는 배열 요소의 개수이고, 두 번째 인자는 `char *`의 배열(포인터의 배열)입니다.
+
+주소연산과 간접지정연산은 서로 정반대되는 개념의 연산자입니다.
+
 ### 2. 다중 포인터
+
+```c
+#include <stdio.h>
+
+int main(int argc, char* argv[])
+{
+    char ch = 'A';
+    char *pData = &ch;
+    char* *ppData = &pData;
+    char** *pppData = &ppData;
+
+    printf("%c\n", ch);
+    printf("%c\n", *pData);
+    printf("%c\n", **ppData);
+    printf("%c\n", ***pppData);
+    return 0;
+}
+```
+핵심은 하나입니다. "포인터도 변수고 모든 변수는 주소를 가졌다." 포인터 변수 자체의 주소와 포인터 변수에 담긴 주소를 구별하여 연산할 수 있다면 몇 중 포인터인지는 중요하지 않습니다.
+
+```c
+#include <stdio.h>
+
+int main(int argc, char* argv[])
+{
+    char* astrList[3] = {"Hello", "World", "String"};
+    char* *ppstrList = astrList;
+    char** *pppstrList = &ppstrList;
+
+    // *(char** + index) 형식은 char*
+    puts(ppstrList[0]);
+    puts(ppstrList[1]);
+    puts(ppstrList[2]);
+
+    // char** 두번 간접지정하면 char*
+    puts(*pppstrList[0]);
+    puts(*(*(pppstrList + 0) + 1));
+    return 0;
+}
+```
 
 ### 3. 다차원 배열에 대한 포인터
 
+2차원 배열이라는 것은 정확히 말해 **요소가 배열인 배열**입니다. `char[2][12]` 배열은 `char[12]`가 요소이고 개수가 2인 배열이며, `char[2][12]` 배열의 식별자인 주소를 담을 수 있는 포인터 변수는 `char (*) [12]`라고 표현해야 합니다. 그런데 많은 사람이 `char**` 포인터에 다음려 합니다. 이는 문법적으로 맞지 않습니다.
+```c
+#include <stdio.h>
+
+int main(int argc, char* argv[])
+{
+    char astrList[2][12] = {"Hello", "World"};
+    char (*pstrList)[12] = astrList;
+
+    puts(pstrList[0]);
+    puts(pstrList[1]);
+    return 0;
+}
+```
+
 ## 변수와 메모리
+
+변수의 본질은 메모리입니다. 그리고 그중에 우리가 사용할 수 있는 메모리는 **스택, 힙, 텍스트, 테이터 영역의 메모리**입니다. 지역변수는 기본적으로 스택(stack) 영역입니다. 스택 구조의 메모리는 관리가 자동으로 이루어지므로, 스택을 사용하는 변수를 자동변수라고 부릅니다.
+
+사실 변수를 선언할 때는 어떤 메모리를 쓸 것인지 명시해야 합니다. 그러나 아무런 언급이 없는 **지역변수는 컴파일러가 알아서 모두 자동변수로 처리**합니다. '메모리 종류'의 영문 표기는 'storage-class'인데 우리말로 '기억부류' 혹은 '기억류'라고 합니다. 그리고 변수를 선언할 때 자료형 앞에 기억부류를 명시하는 예약어를 **기억부류 지정자(storage-class specifier)**라 합니다. C언어의 기억부류 지정자 예역어는 `extern`(외부), `auto`(자동), `static`(정적), `register`(레지스터)등 있습니다. 참고로 '레지스터'는 일반 메모리가 아니라 CPU가 가진 메모리입니다.
+
+```c
+#include <stdio.h>
+
+int main(int argc, char* argv[])
+{
+    auto int aList[3] = {10, 20, 30};
+    auto int i = 0;
+
+    for (i = 0; i < 3; ++i)
+        printf("%d\t", aList[i]);
+    return 0;
+}
+```
+스코프 내부에서 변수를 선언할 때 기억부류 지정자를 생략하면 모두 `auto`로 처리합니다. 따라서 위의 예제에서 `auto` 예약어는 생략해도 됩니다.
 
 ### 1. 정적변수 `static`
 
+전역변수 혹은 정적변수가 사용하는 데이터 영역 메로는 프로그램이 시작될 때 확보되어 종료될 때까지 유지됩니다. 정적변수는 전역변수처럼 선언될 때 단 한번만 초기화됩니다.
+
+그러나 기술적으로 전역변수나 정적변수는 모두 **동시성(concurrency)을 지원하기 어렵다는 문제**가 있습니다. 동시성은 병렬처리(parallel processing)와 직결되고 병렬처리는 다시 성능과 직결됩니다. 그러므로 정젹변수를 사용하는 일은 신중히 결정해야 합니다.
+
 ### 2. 레지스터 변수 `register`
+
+레지스터 변수는 과거 주기억장치의 속도가 비교적 느리던 시절에 사용되었습니다. 그래서 지금은 레지스터 변수를 다루는 일이 PC에서는 큰 의미가 없습니다. 임베디드 운영체제나 H/W를 위한 프로그램을 제작하는 경우가 아니라면 크게 따질 필요가 없습니다. 다만 문법상 주의할 것이 하나있습니다.
+
+레지스터 변수는 CPU의 일부이므로 별도로 **주소가 없습니다**. CPU의 일부인 레지스터는 일반 메모리와 달리 주소가 아니라 **고유명사**로 식별됩니다. 따라서 레지스터 변수에 대해 일반변수처럼 주소연산(`&`)을 수행할 수 없습니다.
+
+
+## 연습문제
+
+[문제 01](../code/11/01.c)
+
+[문제 02](../code/11/02.c)
+
+[문제 03](../code/11/03.c)
+
+[문제 04](../code/11/04.c)
+
+[문제 05](../code/11/05.c)
