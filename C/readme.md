@@ -21,3 +21,5 @@
 10. [함수에 대한 기본 이론](./docs/10_function.md)
 
 11. [메모리와 포인터](./docs/11_memory_and_pointer.md)
+
+12. [함수 응용](./docs/12_function_application.md)
