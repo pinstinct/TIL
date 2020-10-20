@@ -246,9 +246,137 @@ int main(void)
 
 ## 문자/문자열 처리 함수
 
+CRL(C-Runtime Library)은 많은 표준함수를 제공합니다. 표준함수는 호환성이나 안정성이 이미 오랜 시간 동안 검증된 좋은 코드이므로, 알아 두었다가 그런 기능이 필요할 때 잘 사용하면 됩니다.
+
 ### 1. 문자 처리 함수
 
+- `isalpha()`: A~Z, a~z에 속하는 문자인지 검사하는 함수이다.
+- `isdigit()`: 0~9에 속하는 문자(char)인지 검사하는 함수이다.
+- `isxdigit()`: 0-9, A-F, a-f에 속하는 문자(char)인지 검사하는 함수이다.
+- `isalnum()`: 0~9, A~Z, a~z에 속하는 문자(char)인지 검사하는 함수이다.
+- `islower()`: 영운 소문자인지 검사하는 함수이다.
+- `isupper()`: 영문 대문자인지 검사하는 함수이다.
+- `isspace()`: Ox09~0x0D 혹은 Ox20에 속하는 화이트 스페이스 문자인지 검사하는 함수이다.
+- `toupper()`: 영문 소문자를 대문자로 변환하는 함수이다.
+- `tolower()`: 영운 대문자를 소문자로 변환하는 함수이다.
+
 ### 2. 문자열 처리 함수
+
+`gets()`, `puts()`, `printf()`, `scanf()` 함수들도 모두 문자열 처리 함수들입니다.
+
+
+#### `strcat()`, `strncat()` 함수를 이용한 문자열 붙이기
+
+```c
+char *strcat(char *strDestination, const char *strSource);
+```
+- 인자
+    - strDestination: 문자열을 추가(append)하여 저장할 메모리 주소
+    - strSource: 추가할 문자열이 저장된 메모리 주소
+- 반환값
+    - strDestination: 인자로 주어진 주소 반환
+
+```c
+char *strncat(char *strDestination, const char *strSource, size_t count);
+```
+- 인자
+    - strDestination: 문자열을 추가(append)하여 저장할 메모리 주소
+    - strSource: 추가할 문자열이 저장된 메모리 주소
+    - count: 추가할 문자열 길이
+- 반환값
+    - strDestination: 인자로 주어진 주소 반환
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+int main(void)
+{
+    char szPath[128] = {"C:\\Program Files\\"};
+    char szBuffer[128] = {0};
+    printf("Input path: ");
+    gets(szBuffer);
+
+    strcat(szPath, szBuffer);
+    puts(szPath);
+    return 0;
+}
+```
+
+보통 `strcat()` 함수가 반환한 주소값은 잘 사용하지 않습니다. 함수를 호출할 때 첫 번째 인수로 기술한 주소를 그대로 반환하기 때문입니다.
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+int main(void)
+{
+    char szPath[128] = {"C:\\Program Files\\"};
+
+    strcat(szPath, "CHS\\");
+    strcat(szPath, "C programming");
+    puts(szPath);
+
+    strcpy(szPath, "C:\\Program Files\\");
+    strcat(szPath + strlen("C:\\Program Files\\"), "CHS\\");
+    strcat(szPath + strlen("C:\\Program Files\\CHS\\"), "C programming");
+    puts(szPath);
+    return 0;
+}
+```
+위의 예제의 `strlen()` 함수는 사실상 필요 없습니다. `strcat()` 함수가 내부적으로 호출하여 문자열의 끝을 스스로 계산하기 때문입니다. 참고로 `strlen()` 함수는 문자열의 깅리를 측정하기 위해 내부적으로 `while`문을 이용합니다. 결국 **문자열의 길이가 늘어날수록 길이를 측정하기 위해 반복해야 한 횟수가 늘어나고 그만큼 효율을 떨어뜨립니다**.
+
+결국 대안으로 직접 새로운 `strcat*()` 함수를 만드는 것입니다. 문자열을 이어 붙인 후 **맨 마지막 문자(`\0`이 아닌 문자)가 저장된 메모리 주소를 반환**합니다. 그러면 두 번째로 이어 붙일 때는 문자열의 길이를 처음부터 측정하지 않을 수 있습니다.
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+char* mystrcat(char *pszDst, char *pszSrc)
+{
+    while (*pszDst != '\0')
+        ++pszDst;
+
+    while (*pszSrc != '\0')
+        *pszDst++ = *pszSrc++;
+
+    *++pszDst = '\0';
+    return --pszDst;
+}
+
+int main(void)
+{
+    char szPath[128] = {0};
+    char *pszEnd = NULL;
+
+    pszEnd = mystrcat(szPath, "C:\\Program Files\\");
+    pszEnd = mystrcat(pszEnd, "CHS\\");
+    pszEnd = mystrcat(pszEnd, "C programming");
+
+    puts(szPath);
+    return 0;
+}
+```
+
+#### `sprintf()` 함수를 이용한 문자열 붙이기
+
+`printf()` 함수와 거의 같습니다. 다만 문자열을 콘솔 화면이 아니라 '메모리'에 출력한다는 점이 다릅니다.
+
+#### `strpbrk()` 함수를 이용한 구문 분석
+
+'문자들' 중 하나가 있는지 검색합니다. 예를 들어, 검색 대상 문자열에서 "ABC"를 검색하면 "ABC"라는 문자열을 검색하는 것이 아니라, 'A', 'B', 'C'가 있는지 대상 문자열에서 검색합니다. 그리고 한 글자라도 일치하는 것을 찾으면 그 주소를 반환합니다.
+
+```c
+char *strpbrk(const char *string, const char *strCharSet);
+```
+- 인자
+    - string: 검색 대상 문자열이 저장되 메모리 주소
+    - strCharSet: 검색할 문자집합
+- 반환값
+    - 찾으면 해당 문자가 저장된 메모리 주소 반환
+    - 찾지 못하면 `NULL` 반환
+
+#### `strtok()` 함수를 이용한 구문분석
 
 ### 3. 유니코드 문자열
 
