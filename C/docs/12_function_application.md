@@ -400,10 +400,76 @@ C 언어에서 문자열은 두 종류로 구별할 수 있는데, 첫 번째는
 
 #### `wprintf()`, `wcscpy()` 함수
 
+유니코드 문자열은 **유니코드 문자열 전용 함수**를 사용해야 합니다. `printf()` 대신 `wprintf()` 함수를 사용하고, `strcpy()` 대신 `wcscpy()` 함수를 사용합니다. 모든 문자열처리 함수에 대해 MBCS 버전과 UNICODE 버전이 함께 존재합니다.
+
+#### `wcstombs()`, `mbstowcs()` 함수
+
+```c
+size_t wcstombs(char *mbstr, const wchar_t *wcstr, size_t count);
+```
+
+- 인자
+    - mbstr: MBCS로 변환한 문자열을 저장할 메모리 주소
+    - wcstr: MBCS로 변환할 유니코드 문자열이 저장된 메모리 주소
+    - count: MBCS로 변환할 문자열의 최대 크기
+- 반환값: MBCS로 변환된 문자열 길이 (mbstr 인수가 `NULL`이면 변환을 위해 필요한 메모리 길이 반환)
+- 설명: 유니코드 문자열을 MBCS 문자열로 변환하는 함수
+
+```c
+size_t mbstowcs(wchar_t *wcstr, const char *mbstr, size_t count);
+
+```
+- 인자
+    - wcstr: 유니코드로 변환한 문자열을 저장할 메모리 주소
+    - mbstr: 유니코드로 변환할 MBCS 문자열이 저장된 메모리 주소
+    - count: 유니코드로 변환할 문자열의 최대 크기
+- 반환값: 유니코드로 변환된 문자열 길이 (wcstr 인수가 `NULL`이면 변환을 위해 필요한 메모리 길이 반환)
+- 설명: MBCS 문자열을 유니코드 문자열로 변환하는 함수
 
 ## 유티리티 함수
 
 ### 1. `atoi()`, `atol()`, `atof()` 함수
+
+`atoi()` 함수 이름의 의미는 'ASCII to integer'입니다. 사용빈도가 높은 함수입니다.
+
+```c
+int atoi(const char *string);
+```
+- 인자: 변환할 문자열이 저장된 메모리 주소
+- 반환값: 변환된 `int` 값, 실패할 경우 `0`
+- 설명: 정수 문자열을 실제 정수로 변환하는 함수
+
+```c
+long atol(const char *string);
+```
+- 인자: 변환할 문자열이 저장된 메모리 주소
+- 반환값: 변환된 `long` 값, 실패할 경우 `0L`
+- 설명: `long`형 숫자 문자열을 실제 `long` 숫자로 변환하는 함수
+
+```c
+double atof(const char *string);
+```
+- 인자: 변환할 문자열이 저장된 메모리 주소
+- 반환값: 변환된 값, 실패할 경우 `0.0`
+- 설명: 실수 문자열을 실제 실수로 변환하는 함수
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+void main(void)
+{
+    char szBuffer[32];
+    int nResult = 0;
+
+    printf("Input String: ");
+    gets(szBuffer);
+
+    nResult = atoi(szBuffer);
+    printf("%d\n", nResult);
+}
+```
+자료의 표현번위를 벗어나는 경우에는 표현할 수 있는 최대값을 반환합니다. 이와 같은 오류가 발생했을 때 프로그램이 비정상 종료되는 것이 아니라 프로그램은 멀쩡한 데 연산 결과가 바르지 못한 경우가 되어 오류를 찾아내기 매우 까다롭습니다.
 
 ### 2. `time()`, `localtime()`, `ctime()` 함수
 
