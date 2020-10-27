@@ -473,6 +473,114 @@ void main(void)
 
 ### 2. `time()`, `localtime()`, `ctime()` 함수
 
+컴퓨터에서 시간을 표시할 때는 UTC(Universal Time Coordinated)나 GMT(Greenwich Mean Time)를 기준으로 표시합니다. GMT는 하루가 정확히 24시간으로 이루어졌다고 가정하여 시간을 계산합니다. 문제는 실제로 지구의 하루가 정확히 24시간이 아니라는데 있습니다. 이런 이유로 많은 **컴퓨터가 UTC를 기준으로 시간을 표시**하고 있습니다.
+
+C 언어 표준 라이브러리 함수인 `time()` 함수는 1970년 1월 1일 자정부터 현재(컴퓨터에 설정된 시간)까지 흘러간 시간을 초 단이로 계산해주는 함수입니다. 반환값으로 결과를 알 수 있으므로 대부분 `NULL`을 인자로 호출합니다.
+
+```c
+time_t time(time_t *timer);
+```
+
+```c
+struct tm *localtime(const time_t *timer);
+```
+
+```c
+char *ctime(const time_t *timer);
+```
+
+```c
+#include <stdio.h>
+#include <time.h>
+
+void main()
+{
+    struct tm *ptime = {0};
+    time_t t = 0;
+
+    t = time(NULL);
+    ptime = localtime(&t);
+
+    printf("%d\n", t);
+    printf("%s", ctime(&t));
+    printf("%04d-%02d-%02d\n",
+        ptime->tm_year + 1900,  // 과거에는 연도를 두 자리 숫자로 표기
+        ptime->tm_mon + 1,  // months since January - [0, 11]
+        ptime->tm_mday);
+}
+```
+
 ### 3. `srand()`, `rand()` 함수
 
+`rand()` 함수는 난수(0~0x7FFF)를 발생하는 함수입니다. 참고로 0x7FFFF를 십진수로 변환하면 32767입니다. 그리고 난수의 최대값은 `RAND_MAX`라는 상수를 사용합니다.
+
+그리고 `rand()` 함수를 호출하기 앞서 반드시 `srand()` 함수를 호출하여 초기값을 설정해야 늘 다른 값을 반환합니다. 그렇지 않으면 시작할 때마다 매번 같은 순서의 난수가 발생합니다.
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+void main()
+{
+    int i = 0;
+    srand((unsigned)time(NULL));
+    for (i = 0; i < 10; ++i)
+        printf("%6d\n", rand());  // RAND_MAX 범위에서 난수 발생
+
+    for (i = 0; i < 10; ++i)
+        printf("%6d\n", rand() % 10);  // 0에서 10미만의 난수 발생
+}
+```
+난수의 범위는 '나머지 연산자'를 통해 제한할 수 있습니다. 만일 가위바위보 게임 같은 것을 개발하고자 한다면 난수의 범위를 0~2로 제한하면 됩니다.
+
 ### 4. `system()`, `exit()` 함수
+
+`system()` 함수는 명령 프롬프트를 통해 명령을 내리는 것과 같은 기능을 제공합니다.
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+void main()
+{
+    char szCommand[512] = {0};
+    printf("Input command: ");
+    gets(szCommand);
+    system(szCommand);
+}
+```
+
+`exit()` 함수는 프로그램을 즉시 종료하는 함수입니다.
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+void main()
+{
+    char ch;
+    printf("Do you want to EXIT? (Y/N)\n");
+    ch = getchar();
+
+    if (ch == 'y' || ch == 'Y')
+    {
+        puts("EXIT");
+        exit(1);
+    }
+    puts("End of main()");
+}
+```
+
+
+## 연습문제
+
+[문제 01](../code/12/02.c)
+
+[문제 02](../code/12/03.c)
+
+[문제 03](../code/12/04.c)
+
+[문제 04](../code/12/05.c)
+
+[문제 05](../code/12/06.c)
