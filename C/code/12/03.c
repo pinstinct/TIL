@@ -2,8 +2,7 @@
 
 /*
 매개변수로 char*의 배열이름과 요소의 개수를 인수로 받아
-오름차순으로 문자열을 정리하는 SortString( ) 함수를 작성하세요.
-다음과 같은 main( ) 함수의 코드에 대한 출력 예를 참고하여 작성합니다
+오름차순으로 문자열을 정리하는 SortString( ) 함수를 작성합니다.
 */
 int SortString(char** srcList, int lenList)
 {
