@@ -110,3 +110,125 @@ int main(void)
     return 0;
 }
 ```
+
+### 2. 구조체 동적 할당
+
+구조체는 사용자가 그 구조를 설계한 자료형입니다. 따라서 **메모리를 해석하는 방법**이라고 봐야 합니다. 구조체를 자동변수 형태로 선언 및 정의할 수도 있고 전역변수로 선언하는 것도 가능합니다. 물론 `malloc()` 함수를 이용해 동적 할당하는 것도 가능합니다.
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct USERDATA
+{
+    int nAge;
+    char szName[32];
+    char szPhone[32];
+} USERDATA;
+
+int main(void)
+{
+    // USERDATA 구조체에 대한 포인터 변수 선언 및 정의
+    USERDATA *pUser = NULL;
+
+    // USERDATA 구조체가 저장될 수 있을 수 있는 크기의 메모리 동적 할당
+    pUser = (USERDATA*)malloc(sizeof(USERDATA));
+
+    // 포인터 이므로 '.'이 아니라 '->' 연산자로 멤버에 접근
+    pUser->nAge = 10;
+    strcpy(pUser->szName, "Hoon");
+    strcpy(pUser->szPhone, "9876");
+
+    printf("%d살\t%s\t%s\n",
+    pUser->nAge,
+    pUser->szName,
+    pUser->szPhone);
+
+    // 동적 할당한 메모리 해제
+    free(pUser);
+    return 0;
+}
+```
+
+### 3. 반환자료, 매개변수 구조체
+
+구조체도 함수의 반환 자료형이나 매개변수가 될 수 있습니다.
+
+```c
+#include <stdio.h>
+
+// 구조체 선언 및 형 재선언
+typedef struct USERDATA
+{
+    int nAge;
+    char szName[32];
+    char szPhone[32];
+} USERDATA;
+
+// 구조체 형식을 반환하는 함수 선언 및 정의
+USERDATA GetUserData(void)
+{
+    USERDATA user = {0};
+    // %*c는 '\n'을 제거하기 위함
+    scanf("%d%*c", &user.nAge);
+    gets(user.szName);
+    gets(user.szPhone);
+    return user;
+}
+
+int main(void)
+{
+    USERDATA user = {0};
+
+    // 함수가 반환한 구조체를 저장하고 출력
+    user = GetUserData();
+
+    printf("%d살\t%s\t%s\n",
+    user.nAge,
+    user.szName,
+    user.szPhone);
+
+    return 0;
+}
+```
+그런데 이와 같이 **구조체 변수를 매개변수나 반환 자료형식으로 사용하는 것은 비효울**적입니다. 복사해야 할 정보의 양이 기본 자료형에 비해 크기 때문입니다. 그렇기 때문에 **구조체가 매개 변수나 반환형이 될 때는 Call by reference 형식으로 처리**하는 것이 좋습니다. 위의 예제에서 선언 및 정의 된 `USERDATA` 구조체 변수(`USERDATA user = {0};`)의 개수는 모두 두 개입니다. 그런데 다음과 같이 코드를 변경한다면 하나를 제거할 수 있습니다.
+
+```c
+#include <stdio.h>
+
+typedef struct USERDATA
+{
+    int nAge;
+    char szName[32];
+    char szPhone[32];
+} USERDATA;
+
+// 구조체 인스턴스가 아니라 구조체에 대한 '포인터'를 매개변수로 받는다.
+USERDATA GetUserData(USERDATA *pUser)
+{
+    scanf("%d%*c", &pUser->nAge);
+    gets(pUser->szName);
+    gets(pUser->szPhone);
+}
+
+int main(void)
+{
+    USERDATA user = {0};
+
+    // Call by reference로 변경
+    GetUserData(&user);
+
+    printf("%d살\t%s\t%s\n",
+    user.nAge,
+    user.szName,
+    user.szPhone);
+
+    return 0;
+}
+```
+
+구조체는 선언하기에 따라 그 크기가 달라질 수 있습니다. 그런데 덩치가 큰 구조체를 주소로 넘기지 않고 일반 변수처럼 Call by value 형식으로 처리하면 스택을 많이 사용하는 코드가 되어버립니다. 게다가 함수 호출과정에서 메모리를 계속해 복사하는 연산도 수행해야 합니다. 아무래도 효율이 떨어질 수 밖에 없습니다.
+
+그러므로 **구조체를 함수의 인수로 전달할 때는 Call by reference 방식을 사용하는 것이 현명**합니다.
+
