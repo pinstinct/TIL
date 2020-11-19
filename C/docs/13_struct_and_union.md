@@ -232,3 +232,122 @@ int main(void)
 
 그러므로 **구조체를 함수의 인수로 전달할 때는 Call by reference 방식을 사용하는 것이 현명**합니다.
 
+### 4. 구조체를 멤버로 가지는 구조체
+
+```c
+#include <stdio.h>
+
+// MYBODY 구조체 선언 및 형 재선언
+typedef struct MYBODY
+{
+    int nHeight;
+    int nWeight;
+} MYBODY;
+
+// MYBODY 구조체를 멤버로 가지는 USERDATA 구조체 선언
+typedef struct USERDATA
+{
+    char szName[32];
+    char szPhone[32];
+    MYBODY body;
+} USERDATA;
+
+int main(void)
+{
+    USERDATA user = {
+        "Hoon",
+        "1234",
+        {175, 70}  // MYBODY 구조체 멤버 초기화
+    };
+    printf("%s\t%s\t%d\t%d\n",
+    user.szName, user.szPhone,
+    // 멤버 접근 연산을 두 번 함
+    user.body.nHeight, user.body.nWeight);
+    return 0;
+}
+```
+
+#### 자기 참조 구조체
+
+구조체의 멤버로 구조체에 대한 포인터 변수를 선언할 수도 있습니다. 그 포인터가 가리키는 대상이 바로 자기 자신이면 **자기 참조 구조체**라고 부릅니다.
+
+참고로 연결 리스트에서 링크(연결)되어야 할 대상을 **노드(node)**라고 부르는데, 이 노드를 기술하는 문법이 바로 자기 참조 구조체입니다.
+
+```c
+#include <stdio.h>
+
+// USERDATA 구조체 선언 및 형 재선언
+typedef struct USERDATA
+{
+    char szName[32];
+    char szPhone[32];
+    // USERDATA 구조체를 가리킬 수 있는 포인터를 멤버로 선언
+    struct USERDATA *pNext;
+} USERDATA;
+
+int main(void)
+{
+    // 두 개의 USERDATA 구조체 인스턴스 선언 및 정의
+    USERDATA user = {"kim", "1234", NULL};
+    USERDATA newUser = {"jung", "2345", NULL};
+
+    // pNext 멤버를 이용해 두 인스턴스를 연결
+    user.pNext = &newUser;
+
+    printf("%s, %s\n", user.szName, user.szPhone);
+    // pNext 멤버를 이용해 구조상 다음 인스턴스에 접근
+    printf("%s, %s\n", user.pNext->szName, user.pNext->szPhone);
+    return 0;
+}
+```
+`user.pNext = &newUser;` 코드를 실행함으로써 두 구조체 변수(노드)는 논리적으로 연결됩니다. `user.pNext->szName`처럼 `user`의 `pNext` 멤버를 통해 '다음노드'에 접근할 수 있고, 다시 구조체의 멤버접근 연산을 통해 다음 노드의 멤버까지도 접근할 수 있습니다.
+
+아래는 좀 더 실제 연결 리스트에 가까운 예제입니다. 배열로 선언된 네 개의 USERDATA 구조체 변수들을 **단일 연결 리스트** 형태로 묶고 리스트를 구성하고 있는 전체 노드를 반복문을 이용해 접근하는 방법을 보인 예제입니다.
+
+```c
+#include <stdio.h>
+
+// 자기참조 구조체 선언
+typedef struct USERDATA
+{
+    char szName[32];
+    char szPhone[32];
+    struct USERDATA *pNext;
+} USERDATA;
+
+int main(void)
+{
+    // 배열로 USERDATA 구조체 인스턴스 선언 및 정의
+    USERDATA userList[4] = {
+        {"kim", "1234", NULL},
+        {"jung", "2345", NULL},
+        {"ju", "3456", NULL},
+        {"lim", "4567", NULL}
+    };
+    // 연결 리스트의 첫 번째 인스턴의 주소를 저장할 포인터
+    USERDATA *pUser = NULL;
+
+    // pNuext 멤버를 배열의 순서상 다음 구조체 인스턴스의 주소로 정의
+    userList[0].pNext = &userList[1];
+    userList[1].pNext = &userList[2];
+    userList[2].pNext = &userList[3];
+    userList[3].pNext = NULL;  // 마지막 인스턴스는 뒤에 아무것도 없으므로 NULL로 초기화
+
+    // 연결된 리스트의 첫 번째 인스턴스를 가리키도록 포인터 정의
+    pUser = &userList[0];
+    while (pUser != NULL)
+    {
+        // 포인터가 가리키는 인스턴스의 멤버를 출력
+        printf("%s, %s\n", pUser->szName, pUser->szPhone);
+        // 현재 가리키고 있는 인스턴스의 다음 인스턴스를 가리키도록
+        // 포인터를 다음으로 '이동'
+        pUser = pUser->pNext;
+    }
+    return 0;
+}
+```
+`pUser = pUser->pNext;` 코드가 수행되면 `pUser`가 가리키는 대상이 다음 노드로 변경됩니다. 그리고 마지막 노드를 지나면서 `NULL`에 이릅니다.
+
+나중에 연결리스트에 대해 배울 때는 노드의 개수를 지금 예제처럼 배열로 정해놓고 시작하는 것이 아니라 **메모리를 동적 할당하는 방식**으로 계속 리스트에 추가할 수 있도록 코드를 작성합니다.
+
+### 5. 구조체 멤버 맞춤
