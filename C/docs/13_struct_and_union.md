@@ -351,3 +351,66 @@ int main(void)
 나중에 연결리스트에 대해 배울 때는 노드의 개수를 지금 예제처럼 배열로 정해놓고 시작하는 것이 아니라 **메모리를 동적 할당하는 방식**으로 계속 리스트에 추가할 수 있도록 코드를 작성합니다.
 
 ### 5. 구조체 멤버 맞춤
+
+```c
+#include <stdio.h>
+
+typedef struct USERDATA
+{
+    char ch;
+    int nAge;
+} USERDATA;
+
+typedef struct MYDATA
+{
+    char ch;
+    int nAge;
+    double dData;
+} MYDATA;
+
+int main(void)
+{
+    printf("%d\n", sizeof(USERDATA));
+    printf("%d\n", sizeof(MYDATA));
+    return 0;
+}
+```
+실행결과로 5와 13을 예상했겠지만, 결과는 8과 16입니다. 이런 형상이 벌어진 이유는 **구조체 멤버 맞춤(structure member alignment)** 때문입니다. 배열은 각 요소가 연접하여 붙어있습니다. 그러나 구조체는 연접할 수도 있고 그렇지 않을 수도 있습니다. 즉 두 멤버 사이에 일정 크기의 공백기 껴들어 갈 수 있습니다.
+
+**구조체 멤버 맞춤(struct member alignment)에 대한 Visual Stdio의 기본설정은 8바이트(64비트)** 입니다. 그런 것이 있다는 것만 알고 변경하지 않는 것이 좋습니다.
+
+프로그램을 개발하다 보면, 이 구조체들의 멤버 구성을 어떻게 했건 상관없이 모든 멤버가 연접하도록 해야 할 때가 있습니다. 이럴 때는 구조체 멤버 맞춤을 1바이트 단위로 수정하면 됩니다. 다음 예제와 같이 `#pragma pack` 전처기를 이용하면 특정 구조체만 멤버를 1바이트로 맞출 수 있습니다.
+
+```c
+#include <stdio.h>
+
+#pragma pack(push, 1)
+typedef struct USERDATA
+{
+    char ch;
+    int nAge;
+} USERDATA;
+
+typedef struct MYDATA
+{
+    char ch;
+    int nAge;
+    double dData;
+} MYDATA;
+#pragma pack(pop)
+
+int main(void)
+{
+    printf("%d\n", sizeof(USERDATA));
+    printf("%d\n", sizeof(MYDATA));
+    return 0;
+}
+```
+구조체를 통째로 
+- 파일에 저장하거나 읽어오는 경우
+- 네트워크로 전송하거나 수신하는 경우
+멤버 맞춤에 의한 오류가 발생할 가능성은 없는지 반드시 확인해야 합니다.
+
+## 비트필드
+
+비트필드(bit field)는 구조체 멤버가 바이트 단위가 아닌 **비트 단위 데이터를 다루는 멤버**로 선언되는 구조체입니다.
