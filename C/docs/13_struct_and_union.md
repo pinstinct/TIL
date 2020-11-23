@@ -415,3 +415,67 @@ int main(void)
 ## 비트필드
 
 비트필드(bit field)는 구조체 멤버가 바이트 단위가 아닌 **비트 단위 데이터를 다루는 멤버**로 선언되는 구조체입니다.
+
+```c
+#include <stdio.h>
+
+// 비트필드 구조체 선언 및 정의
+typedef struct _DATAFLAG
+{
+    // 8비트를 오른쪽부터 1, 2, 3, 2비트씩 잘라 멤버로 선언
+    unsigned char main : 1;  // 8비트 중 오르쪽 1비트
+    unsigned char left : 2;  // 오른쪽 2~3번째 비트
+    unsigned char right : 3;  // 오른쪽 4~6번째 비트
+    unsigned char top : 2;  // 오른쪽 7~8번째 비트 
+} DATAFLAG;
+
+int main(void)
+{
+    // 1비트 표현범위: 0~1
+    // 2비트 표현범위: 0~3 (4는 범위를 넘어선 값)
+    // 3비트 표현범위: 0~7
+    DATAFLAG flagSwitch = {0, 3, 7, 4};
+
+    printf("%d\n", flagSwitch.main);
+    printf("%d\n", flagSwitch.left);
+    printf("%d\n", flagSwitch.right);
+    // 4는 2비트 표현범위를 넘어선 값이므로 출력할 수 없다. (0 출력)
+    printf("%d\n", flagSwitch.top);
+    printf("%d\n", *((unsigned char *)&flagSwitch));
+    printf("%d\n", sizeof(flagSwitch));
+    return 0;
+}
+```
+**표현범위**를 잘 따져봐야 합니다. 그렇지 않으면 마지막 멤버인 `top`처럼 4가 아니라 0이 들어가 버릴 수도 있습니다. 일반적으로는 이 비트필드를 사용할 일이 잘 없습니다. 그러나 장치를 직접 제어하는 소프트웨어를 개발하는 경우에는 매우 유용한 문법입니다.
+
+## 공용체
+
+공용체(union)는 서로 다른 자료형 여러 개가 모여 새로운 한 덩어리를 이룬 구조체와 달리 **한 가지 자료에 대해 여러가지 해석방법(자료형)을 부여하는 문법**입니다. 4바이트 길이의 메모리는 `int`라고 해석할 수도 있지만, `char[4]` 혹은 `short[2]`도 길이는 모두 4바이트로 같습니다.
+
+```c
+#include <stdio.h>
+
+// IP_ADDR '공용체' 선언 및 형 재선언
+// 4바이트를 세 가지 형식으로 달리 해석할 수 있도록 선언
+typedef union _IP_ADDR
+{
+    int nAddress;  // 해석1
+    short awData[2];  // 해석2
+    unsigned char addr[4];  // 해석3
+} IP_ADDR;
+
+int main(void)
+{
+    IP_ADDR Data = {0};
+    Data.nAddress = 0x41424344;
+
+    // 0x41424344를 8비트씩 0x41, 0x42, 0x43, 0x44 넷으로 잘라
+    // 영문자로 출력
+    printf("%c%c%c%c\n", Data.addr[0], Data.addr[1], Data.addr[2], Data.addr[3]);
+    // 16비트씩 둘로 잘라 출력
+    printf("%x, %d\n", Data.awData[0], Data.awData[0]);
+    printf("%x, %d\n", Data.awData[1], Data.awData[1]);
+    return 0;
+}
+```
+`IP_ADDR` 공용체의 멤버인 `nAddress`, `awData`, `addr`은 **4바이트 메모리에 대한 세가지 해석방법**입니다. 즉, 대상 메모리는 같은 곳이고 자료형만 달라집니다.
