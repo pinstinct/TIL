@@ -96,3 +96,122 @@ void main()
 파일이 개방된 상태에서 닫지 않고 프로그램이 종료되면, 특별한 일이 없는 한 운영체제 모든 파일을 닫아버립니다. 그러나 될 수 있으면 파일을 개방하고 닫는 일은 개발자 스스로 처리하는 것이 바람직합니다.
 
 참고로 파일을 운영체제가 닫는 것과 관련해 '특별 한 일'이라는 것은 운영체제의 커널(kernel) 영역에서 특정 파일을 붙들고 놔주지 않는 경우입니다. 이런 경우는 보동 비동기 파일 입출력을 시도했을 때 발생합니다. 이에 대한 자세한 이론들은 시스템 프로그래밍을 배 울 때 알 수 있습니다.
+
+## 텍스트 파일 입출력
+
+파일 입출력은 표준 입출력처럼 전용 함수를 이용합니다.
+
+### 1. `fprintf()`, `fscanf()` 함수
+
+```c
+int fprintf(FILE *stream, const char *format [, argument]...);
+```
+
+- 인자
+  - stream: `FILE` 구조체에 대한 포인터
+  - format: 형식 문자열이 저장된 메모리 주소
+  - [, argument]: 형식 문자열에 대응하는 가변 인자들
+- 반환값: 출력된 바이트 수
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+void main()
+{
+    FILE *fp = NULL;
+    // 현재 경로에 Test.txt 파일을 생성
+    fp = fopen("Test.txt", "w");
+
+    // 생성한 파일에 문자열을 출력
+    fprintf(fp, "%s\n", "Test string");
+    fprintf(fp, "%s\n", "Hello world!");
+
+    // 파일을 닫고 메모장으로 확인
+    fclose(fp);
+    system("notepad.exe Test.txt");
+}
+```
+
+```c
+int fscanf(FILE *stream, const char *format [, argument ]...);
+```
+
+- 인자
+  - stream: `FILE` 구조체에 대한 포인터
+  - format: 형식 문자열이 저장된 메모리 주소
+  - [, argument]: 형식 문자열에 대응하는 가변 인자들
+- 반환값: 성공적으로 읽어 들인 항목(field)의 개수
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+void main()
+{
+    int nData = 0;
+    char szBuffer[128] = {0};
+    FILE *fp = NULL;
+
+    fp = fopen("fscanfTest.txt", "w");
+    fprintf(fp, "%d,%s\n", 20, "Test");
+    fclose(fp);
+
+    // 파일을 열고 저장된 내용을 읽어 온다.
+    fp = fopen("fscanfTest.txt", "r");
+    fscanf(fp, "%d,%s", &nData, szBuffer);
+    fclose(fp);
+
+    // 읽어온 내용을 화면에 출력
+    printf("%d, %s\n", nData, szBuffer);
+}
+```
+
+`fscanf()` 함수를 호출할 때 `%s` 형식으로 문자열을 읽더라도 빈칸까지만 읽어내기 때문에 단어 하나를 읽는 것은 문제없으나 문장 전체를 읽어 들이고자 하는 경우 `fgets()` 함수를 사용하여 한 행의 문자열을 모두 읽어온 후 문자열을 분석하여 원하는 정보를 뽑아내는 것이 좋습니다.
+
+### 2. `fgetc()`, `fputc()` 함수
+
+```c
+int fgetc(char *stream);
+```
+
+- 인자: `FILE` 구조체에 대한 포인터
+- 반환값: 정상적인 경우 파일에서 읽은 문자 반환, 에러가 발생하면 EOF 반환
+
+```c
+int fputc(int c, FILE *stream);
+```
+
+- 인자
+  - c: 파일에 쓸 문자
+  - stream: `FILE` 구조체에 대한 포인터
+- 반환값: 정상적인 경우 파일에 쓴 문자 반환, 에러가 발생하면 EOF 반환
+
+`fgetc()`, `fputc()` 함수는 각각 파일에서 한 문자를 읽어오고 쓰는 함수입니다.
+
+```c
+#include <stdio.h>
+
+void main()
+{
+    FILE *fp = NULL;
+    char ch;
+
+    fp = fopen("test.txt", "w");
+    fputs("Test string!", fp);
+    fclose(fp);
+
+    fp = fopen("test.txt", "r");
+    if (fp == NULL)
+        return;
+
+    // 파일에서 한글자씩 읽어와 다시 한 글자씩 출력
+    while ((ch = fgetc(fp)) != EOF)
+        putchar(ch);
+    fclose(fp);
+}
+```
+
+`EOF` 상수는 -1인데 이는 파일의 끝을 의미합니다.
+
+### 3. `fgets()`, `fgets_s()`, `fputs()` 함수
