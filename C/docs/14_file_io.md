@@ -215,3 +215,66 @@ void main()
 `EOF` 상수는 -1인데 이는 파일의 끝을 의미합니다.
 
 ### 3. `fgets()`, `fgets_s()`, `fputs()` 함수
+
+```c
+char *fgets(char *string, int n, FILE *stream);
+```
+
+- 인자
+  - string: 읽어 들인 문자열이 저장될 버퍼의 주소
+  - n: 입력 버퍼의 바이트 단위 크기
+  - stream: `FILE` 구조체에 대한 포인터
+- 반환값: 정상적인 경우 `string` 인자로 전달된 주소 반환, 에러가 발생하면 `NULL` 반환
+
+`fgets()` 함수는 파일에서 한 행의 문자열을 읽어오는 함수입니다.
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+void main()
+{
+    FILE *fp = NULL;
+    char szBuffer[512] = {0};
+
+    fp = fopen("Test.txt", "w");
+    fputs("Test\n", fp);
+    fputs("String\n", fp);
+    fputs("Data\n", fp);
+    fclose(fp);
+
+    fp = fopen("Test.txt", "r");
+    if (fp == NULL)
+        return;
+
+    // 파일에서 '한 행'씩 끊어내서 읽어온다.
+    while (fgets(szBuffer, sizeof(szBuffer), fp))
+    {
+        printf("%s", szBuffer);
+        memset(szBuffer, 0, sizeof(szBuffer));
+    }
+    fclose(fp);
+}
+```
+
+```c
+int fputs(const char *string, FILE *stream);
+```
+
+- 인자
+  - string: 출력할 문자열이 저장될 기억공간의 주소
+  - stream: `FILE` 구조체에 대한 포인터
+- 반환값: 정상적인 경우 음수가 아닌 값을 반환, 에러가 발생한 경우에는 EOF 반환
+
+### 4. `fflush()` 함수
+
+```c
+int fflush(FILE *stream)
+```
+
+- 인자: `FILE` 구조체에 대한 포인터
+- 반환값: 성공하면 0, 실패하면 EOF 반환
+
+`fflush()` 함수는 특정파일에 대한 입출력 정보를 초기화하는 함수입니다. `scanf()` 함수나 `gets()` 함수를 이용하여 표준입력장치로 정보를 입력받을 때, 개행 문자가 입출력 버퍼에 남아서 오류가 발생하는 경우가 있을 때, 문제를 해결하기 위해서 `fflush()` 함수를 사용했습니다.
+
+일반적으로 `fflush()` 함수는 출력 스트림을 플러싱(flushing)하는 기능만 제공한다고 봐야합니다. 그리고 '입출력 정보의 초기화'라는 것은 단지 '카운터'값을 초기화하는 것에 불과합니다.
