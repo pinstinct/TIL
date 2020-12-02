@@ -278,3 +278,142 @@ int fflush(FILE *stream)
 `fflush()` 함수는 특정파일에 대한 입출력 정보를 초기화하는 함수입니다. `scanf()` 함수나 `gets()` 함수를 이용하여 표준입력장치로 정보를 입력받을 때, 개행 문자가 입출력 버퍼에 남아서 오류가 발생하는 경우가 있을 때, 문제를 해결하기 위해서 `fflush()` 함수를 사용했습니다.
 
 일반적으로 `fflush()` 함수는 출력 스트림을 플러싱(flushing)하는 기능만 제공한다고 봐야합니다. 그리고 '입출력 정보의 초기화'라는 것은 단지 '카운터'값을 초기화하는 것에 불과합니다.
+
+```c
+#include <stdio.h>
+
+
+void main()
+{
+    // 표준입력장치 파일(stdin)을 가리키는 포인터 변수 선언 및 정의
+    FILE *fp = stdin;
+    printf("Input string: ");
+
+    // 사용자로부터 '문자열'을 입력받은 후 첫 글자를 읽어와 출력
+    printf("getchar() - %c\n", getchar());
+
+    // 버퍼에 남아있는 문자의 개수와 내용에 대한 정보를 출력
+    printf("[%d] %s", fp->_cnt, fp->_base);
+    printf("READ: %d\n", fp->_ptr - fp->_base);
+
+    // 다시 한 글자를 읽어온 후 달라진 내용 확인
+    printf("\n\ngetchar() - %c\n", getchar());
+    printf("[%d] %s", fp->_cnt, fp->_base);
+    printf("READ: %d\n", fp->_ptr - fp->_base);
+
+    // 파일 입출력 버퍼를 초기화한 후 결과 확인
+    fflush(fp);
+    printf("\n\nAfter flushing\n[%d] %s",
+        fp->_cnt, fp->_base);
+    printf("READ: %d\n", fp->_ptr - fp->_base);
+}
+```
+
+```shell
+Input string: TestData
+getchar() - T
+[8] TestData
+
+READ: 1
+
+getchar() - e
+[7] TestData
+
+READ: 2
+
+After flushing
+[0] TestData
+
+READ: 0
+```
+
+`FILE` 구조체의 `_cnt` 멤버는 파일의 입출력 버퍼에서 읽어올 수 있는 남은 문자의 개수입니다. `_base` 멤버는 파일의 입출력 버퍼의 시작 주소이며, `_ptr` 멤버는 읽어올 문자가 저장된 메모리 주소입니다.
+
+## 바이너리 파일 입출력
+
+바이너리 파일(binary file)은 텍스트 파일을 제외한 모든 파일입니다. 파일을 바이너리 모드로 개방할 때는 **접근 모드 문자열에 반드시 `b`를 포함**해야 합니다.
+
+
+### 1. `fread()`, `fwrite()` 함수
+
+`fread()`와 `fwrite()` 함수는 `fgets()`와 `fputs()` 함수와 달리 입출력의 길이가 일정한 메모리 덩어리입니다. 바이너리 모드로 파일 입출력을 시도할 때는 **정해진 길이**만큼 읽고 써야 합니다.
+
+```c
+size_t fread(void *buffer, size_t size, size_t count, FILE *stream);
+```
+
+- 인자
+  - buffer: 파일에서 읽어 들인 내용을 저장할 버퍼의 주소
+  - size: 한 번에 읽을 메모리 블록의 크기
+  - count: 읽어 들일 메모리 블록의 수
+  - stream: `FILE` 구조체에 대한 포인터
+- 반환값: 함수가 성공하면 파일에서 읽어 들인 메모리 블록의 수를 반환
+
+
+```c
+size_t fwrite(const void *buffer, size_t size, szie_t count, FILE *stream);
+```
+
+- 인자
+  - buffer: 파일에 쓸 내용이 저장된 버퍼의 주소
+  - size: 한 번에 쓰고자 하는 메모리 블록의 크기
+  - count: 쓰고자 하는 메모리 블록의 수
+  - stream: `FILE` 구조체에 대한 포인터
+- 반환값: 쓰기에 성공한 메모리 블록의 수를 반환
+
+한 사람에 대한 정보로 이름과 전화번호가 있다고 가정할 때, 이를 문자열로 처리하여 행 단위로 저장할 수도 있지만 이 예제처럼 구조체 덩어리를 통째로 저장할 수도 있습니다. 물론 문자열로 저장하는 방법에 비해 메모리 낭비가 발생한다는 단점이 있으나 처리 속도가 빠르고 개발이 훨씬 편리해질 수 있는 장점이 있습니다.
+
+```c
+#include <stdio.h>
+
+typedef struct _USERDATA
+{
+    char szName[16];
+    char szPhone[16];
+} USERDATA;
+
+void main()
+{
+    FILE *fp = NULL;
+    USERDATA UserData = {"Ho-sung", "123-1234"};
+
+    // 바이너리 쓰기 모드로 파일을 생성
+    fp = fopen("Test.dat", "wb");
+    if (fp == NULL) return;
+
+    // 구조체를 한 번에 바이너리모드로 파일에 쓴다.
+    fwrite(&UserData, sizeof(USERDATA), 1, fp);
+    fclose(fp);
+}
+```
+
+```c
+#include <stdio.h>
+
+typedef struct _USERDATA
+{
+    char szName[16];
+    char szPhone[16];
+} USERDATA;
+
+void main()
+{
+    FILE *fp = NULL;
+    USERDATA UserData = {0};
+
+    // 바이너리 읽기 모드로 파일 열기
+    fp = fopen("Test.dat", "rb");
+    if (fp == NULL) return;
+
+    // 파일에서 바이너리 모드로 구조체를 한 번에 읽고 출력
+    fread(&UserData, sizeof(USERDATA), 1, fp);
+    puts(UserData.szName);
+    puts(UserData.szPhone);
+    fclose(fp);
+}
+```
+
+`fread()` 함수가 반환하는 값이 무엇인가입니다. 파일에서 `USERDATA` 구조체의 길이만큼의 메모리를 1회 읽는 데 성공했다면 반환하는 값은 1입니다. 읽어 들일 수 있는 정보의 길이가 `USERDATA` 구조체의 길이보다 작다면 이 함수는 실패하여 0을 반환합니다.
+
+### 2. `fseek()`, `rewind()`, `ftell()` 함수
+
