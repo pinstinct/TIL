@@ -493,3 +493,9 @@ int _access(const char *path, int mode);
 ## 연습문제
 
 [문제 01](../code/14/01.c)
+
+[문제 02](../code/14/02.c)
+
+[문제 03](../code/14/03.c)
+
+[문제 04](../code/14/04.c)
