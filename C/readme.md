@@ -27,3 +27,5 @@
 13. [구조체와 공용체](./docs/13_struct_and_union.md)
 
 14. [파일 입출력](./docs/14_file_io.md)
+
+15. [변수와 상수 고급 이론](./docs/15_variable_and_constant.md)
