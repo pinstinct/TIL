@@ -31,3 +31,5 @@
 15. [변수와 상수 고급 이론](./docs/15_variable_and_constant.md)
 
 16. [전처리기](./docs/16_preprocessor.md)
+
+17. [함수에 대한 고급 이론](./docs/17_ advanced_function.md)
