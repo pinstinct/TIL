@@ -32,4 +32,4 @@
 
 16. [전처리기](./docs/16_preprocessor.md)
 
-17. [함수에 대한 고급 이론](./docs/17_ advanced_function.md)
+17. [함수에 대한 고급 이론](./docs/17_advanced_function.md)
