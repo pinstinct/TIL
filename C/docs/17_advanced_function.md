@@ -307,5 +307,107 @@ int main(void)
 
 '라이브러리'는 함수들을 모아놓은 파일을 말합니다. 그리고 '정적'이라는 것은 라이브러리를 사용한 코드를 컴파일하고 링크하는 과정에서 마치 하나의 obj 파일처럼 실행 바이너리(.exe)의 일부로 포함된다는 뜻입니다.
 
+### 1. 라이브러리 프로젝트 생성
+
 이번에는 지금까지 만들어온 프로젝트와 달리 정적 라이브러리 프로젝트로 예제를 작성해야 합니다.
+
+```c
+/* LibTest.c */
+#include <stdio.h>
+
+void PrintData(int nParam)
+{
+    printf("PrintData(): %d\n", nParam);
+}
+
+void PrintString(const char *pszParam)
+{
+    printf("PrintString(): %s\n", pszParam);
+}
+```
+
+위의 예제를 빌드합니다. 바이너리 파일의 확장자 'exe'가 아니라 'lib'라는 점에 주의합니다.
+
+기존의 예제와 달리 `main()` 함수가 없고, 결과 바이너리 파일의 형식이 lib 파일임을 직접확인 했을 것입니다. lib 파일은 단독으로 실행하는 것이 아니라 링크타임에 exe 파일을 생성할 때 필요한 파일입니다.
+
+### 2. 헤더파일의 구성
+
+함수는 원형 선언과 정의로 나눌 수 있는데 일반적으로 확장자가 '.c'인 소스파일에는 정의가 들어가고 '.h'인 헤더파일에는 원형 선언이 들어갑니다. 만일 소스코드가 아니라 빌드된 결과 바이너리 파일로 정의가 제공될 때는 '.lib' 파일로 제공됩니다. 따라서 헤더와 라이브러리 파일은 한 세트로 생각할 수 있습니다.
+
+앞서 만든 함수들의 원형 선언이 들어갈 헤더파일을 만듭니다.
+
+```c
+/* LibTest.h */
+#pragma once
+
+void PrintData(int);
+void PrintString(const char *);
+```
+`#pragma once` 코드의 의미는 헤더파일이 중복 `include`되었을 때, 한번만 유효한 것으로 처리하도록 컴파일러에게 알리는 역할을 합니다.
+
+이번 실습의 결과로 만들어진 **헤더파일과 라이브러리 파일은 한 세트**입니다. 이 라이브러리에 들어 있는 함수들을 사용하는 프로그램은 이 두 파일이 필요한데 헤더파일은 컴파일타임에 필요하며 라이브러리 파일은 링크타임에 필요합니다.
+
+### 3. 정적 라이브러리 사용하기
+
+함수들을 따로 모아서 라이브러리 파일로 만드는 이유는 모듈화(modulization)에 의한 장정 때문입니다. 모듈화를 하면
+- 함수의 원형만 공개하고 실제 코드는 감출 수 있으며
+- 프로그램일 작성하는 데 필요한 함수들은 마치 부품처럼 관리할 수 있습니다.
+- 그리고 한 프로그램의 주요 기능을 여러 명의 개발자가 동시에 개발할 수 있습니다.
+
+```c
+/* TestApp.c */
+#include "LibTest.h"
+
+#pragma comment(lib, "LibTest")
+
+int main(void)
+{
+    PrintData(10);
+    PrintString("Test String");
+    return 0;
+}
+```
+
+TestApp 프로젝트에 위의 예제를 작성하고, 앞서 만들어둔 LibTest.lib 파일과 LibTest.h 파일을 TestApp 프로젝트 폴더에 복사한 후 빌드합니다.
+
+`#pragma comment(lib, "LibTest")` 코드는 Visual studio에 설정된 기본 라이브러리 외에 다른 라이브러리가 사용되었음을 컴파일러에 알리고 함께 링크되도록 설정하는 코드입니다.
+
+## 가변인자 사용하기
+
+`printf()` 함수나 `scanf()` 함수는 **가변인자**라는 매우 독특한 기능을 제공합니다. 이 가변인자를 사용자 정의 함수에서도 사용할 수 있습니다. 
+
+`GetMax()` 함수의 왼쪽 첫 번재 인자는 고정 인자로서 가변이 될 수 없고, 나머지 오른쪽 인자들의 개수가 전달되어야 합니다.
+
+```c
+#include <stdio.h>
+#include <stdarg.h>  // 가변인자 사용을 위해 include
+
+int GetMax(int nCount, ...)
+{
+    int nMax = -9999, nParam = 0, i = 0;
+    va_list pList = {0};  // va_list는 char*를 형 재선언 한 것
+
+    // va_start() 매크로를 통해 첫 번째 매개변수 이후의 매개변수가
+    // 저장된 Stack 메모리의 주소를 pList에 저장
+    va_start(pList, nCount);
+    for (i = 0; i < nCount; i++)
+    {
+        // 가변인자들의 자료형이 int 형이라고 가정하고
+        // va_arg() 매크로를 통해 pList가 가리키는 메모리의 내용을 해석해 int 형 변수 nParam에 대입
+        // 이때, va_arg() 매크로 내부에서 pList의 주소값을 다음 매개변수가 저장된 메모리의 주소로 변경
+        nParam = va_arg(pList, int);  
+        if (nParam > nMax) nMax = nParam;
+    }
+    va_end(pList);  // pList를 0으로 초기화
+    return nMax;
+}
+
+int main(void)
+{
+    printf("MAX: %d\n", GetMax(3, 10, 30, 20));
+    printf("MAX: %d\n", GetMax(4, 40, 10, 30, 20));
+    printf("MAX: %d\n", GetMax(5, 40, 10, 50, 30, 20));
+    return 0;
+}
+```
 
