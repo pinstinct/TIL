@@ -1,5 +1,5 @@
-from asyncio import new_event_loop
 from datetime import date, time, datetime, timedelta  # datetime 모듈의 객체
+
 
 def main():
     """날짜 다루기 - date 객체 """

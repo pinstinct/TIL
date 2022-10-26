@@ -57,6 +57,5 @@ def main():
     pprint(list(rrule(WEEKLY, interval=2, count=3)))  # 격주
 
 
-
 if __name__ == "__main__":
     main()

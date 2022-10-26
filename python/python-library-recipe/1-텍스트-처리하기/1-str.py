@@ -68,5 +68,6 @@ def main():
     print(encoding.encode('ascii', 'ignore'))  # 에러가 발생할 경우 무시 (한국어를 무시)
     print(encoding.encode('ascii', 'replace'))  # 에러가 발생할 경우 변환 (한국어를 ?로 변환)
 
+
 if __name__ == "__main__":
     main()
